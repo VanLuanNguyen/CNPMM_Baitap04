@@ -48,4 +48,7 @@ export interface ProductQuery {
   limit?: number;
   category?: string;
   search?: string;
+  fuzzy?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
 }

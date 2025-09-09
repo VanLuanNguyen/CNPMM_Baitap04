@@ -1,9 +1,17 @@
 const Product = require('../models/product');
+const elasticsearchService = require('./elasticsearchService');
 
 const productService = {
     // Lấy sản phẩm với phân trang và filter theo danh mục
-    getProducts: async (page = 1, limit = 10, category = null, search = null) => {
+    getProducts: async (page = 1, limit = 10, category = null, search = null, useElasticsearch = false, minPrice = undefined, maxPrice = undefined) => {
         try {
+            // Nếu có search term và bật Elasticsearch, sử dụng fuzzy search
+            if (search && useElasticsearch) {
+                const result = await elasticsearchService.searchProducts(search, page, limit, category, minPrice, maxPrice);
+                return result;
+            }
+            
+            // Fallback về MongoDB search thông thường
             const skip = (page - 1) * limit;
             
             // Tạo filter query
@@ -21,6 +29,17 @@ const productService = {
                     { description: { $regex: new RegExp(search, 'i') } },
                     { tags: { $in: [new RegExp(search, 'i')] } }
                 ];
+            }
+
+            // Lọc theo khoảng giá nếu có
+            if (minPrice !== undefined || maxPrice !== undefined) {
+                filter.price = {};
+                if (minPrice !== undefined) {
+                    filter.price.$gte = minPrice;
+                }
+                if (maxPrice !== undefined) {
+                    filter.price.$lte = maxPrice;
+                }
             }
             
             // Đếm tổng số sản phẩm
@@ -83,6 +102,10 @@ const productService = {
         try {
             const product = new Product(productData);
             await product.save();
+            
+            // Index vào Elasticsearch
+            await elasticsearchService.indexProduct(product);
+            
             return {
                 success: true,
                 data: product,
@@ -92,6 +115,20 @@ const productService = {
             return {
                 success: false,
                 message: 'Lỗi khi tạo sản phẩm',
+                error: error.message
+            };
+        }
+    },
+
+    // Sync tất cả sản phẩm từ MongoDB sang Elasticsearch
+    syncToElasticsearch: async () => {
+        try {
+            const result = await elasticsearchService.indexAllProducts();
+            return result;
+        } catch (error) {
+            return {
+                success: false,
+                message: 'Lỗi khi sync dữ liệu sang Elasticsearch',
                 error: error.message
             };
         }

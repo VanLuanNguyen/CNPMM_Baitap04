@@ -8,19 +8,25 @@ const productController = {
                 page = 1,
                 limit = 10,
                 category = null,
-                search = null
+                search = null,
+                fuzzy = false,
+                minPrice = null,
+                maxPrice = null
             } = req.query;
 
             // Validate parameters
             const pageNum = Math.max(1, parseInt(page) || 1);
             const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 10)); // Giới hạn tối đa 50 items
+            const useElasticsearch = fuzzy === 'true' || fuzzy === true;
+            const minPriceNum = minPrice !== null && minPrice !== undefined && minPrice !== '' ? Math.max(0, parseFloat(minPrice)) : undefined;
+            const maxPriceNum = maxPrice !== null && maxPrice !== undefined && maxPrice !== '' ? Math.max(0, parseFloat(maxPrice)) : undefined;
 
-            const result = await productService.getProducts(pageNum, limitNum, category, search);
+            const result = await productService.getProducts(pageNum, limitNum, category, search, useElasticsearch, minPriceNum, maxPriceNum);
 
             if (result.success) {
                 return res.status(200).json({
                     success: true,
-                    message: 'Lấy danh sách sản phẩm thành công',
+                    message: useElasticsearch ? 'Tìm kiếm fuzzy search thành công' : 'Lấy danh sách sản phẩm thành công',
                     ...result.data
                 });
             } else {
@@ -88,6 +94,34 @@ const productController = {
             }
         } catch (error) {
             console.error('Error in createProduct:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Lỗi server nội bộ',
+                error: error.message
+            });
+        }
+    },
+
+    // POST /products/sync - Sync dữ liệu từ MongoDB sang Elasticsearch
+    syncToElasticsearch: async (req, res) => {
+        try {
+            const result = await productService.syncToElasticsearch();
+
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: result.message,
+                    data: result.data
+                });
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: result.message,
+                    error: result.error
+                });
+            }
+        } catch (error) {
+            console.error('Error in syncToElasticsearch:', error);
             return res.status(500).json({
                 success: false,
                 message: 'Lỗi server nội bộ',

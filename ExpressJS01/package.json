@@ -10,7 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon ./src/server.js",
     "start": "nodemon ./src/server.js",
-    "seed": "node ./src/config/seedProducts.js"
+    "seed": "node ./src/config/seedProducts.js",
+    "sync-elasticsearch": "node ./src/config/syncElasticsearch.js"
   },
   "keywords": [
     "nodejs",
@@ -18,6 +19,7 @@
     "reactjs"
   ],
   "dependencies": {
+    "@elastic/elasticsearch": "^8.11.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",

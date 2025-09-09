@@ -35,6 +35,9 @@ const getProductsApi = (params: ProductQuery = {}): Promise<ProductsResponse> =>
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.category && params.category !== 'all') queryParams.append('category', params.category);
   if (params.search) queryParams.append('search', params.search);
+  if (params.fuzzy) queryParams.append('fuzzy', params.fuzzy.toString());
+  if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
+  if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
   
   const queryString = queryParams.toString();
   const finalUrl = queryString ? `${URL_API}?${queryString}` : URL_API;
