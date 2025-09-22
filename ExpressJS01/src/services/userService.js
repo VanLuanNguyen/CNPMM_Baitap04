@@ -80,8 +80,284 @@ const getUserService = async (email) => {
         return null;
     }
 }
+
+const addToFavoritesService = async (userEmail, productId) => {
+    try {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        // Kiểm tra xem sản phẩm đã có trong favorites chưa
+        if (user.favorites.includes(productId)) {
+            return {
+                EC: 2,
+                EM: "Product already in favorites"
+            };
+        }
+
+        // Thêm sản phẩm vào favorites
+        user.favorites.push(productId);
+        await user.save();
+
+        return {
+            EC: 0,
+            EM: "Product added to favorites successfully"
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 3,
+            EM: "Error adding product to favorites"
+        };
+    }
+}
+
+const removeFromFavoritesService = async (userEmail, productId) => {
+    try {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        // Xóa sản phẩm khỏi favorites
+        const index = user.favorites.indexOf(productId);
+        if (index === -1) {
+            return {
+                EC: 2,
+                EM: "Product not in favorites"
+            };
+        }
+
+        user.favorites.splice(index, 1);
+        await user.save();
+
+        return {
+            EC: 0,
+            EM: "Product removed from favorites successfully"
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 3,
+            EM: "Error removing product from favorites"
+        };
+    }
+}
+
+const getUserFavoritesService = async (userEmail) => {
+    try {
+        const user = await User.findOne({ email: userEmail })
+            .populate('favorites')
+            .select('favorites');
+        
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        return {
+            EC: 0,
+            data: user.favorites
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 2,
+            EM: "Error getting user favorites"
+        };
+    }
+}
+
+const checkIsFavoriteService = async (userEmail, productId) => {
+    try {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        const isFavorite = user.favorites.includes(productId);
+        return {
+            EC: 0,
+            isFavorite
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 2,
+            EM: "Error checking favorite status"
+        };
+    }
+}
+
+const addToViewedProductsService = async (userEmail, productId) => {
+    try {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        // Kiểm tra xem sản phẩm đã có trong lịch sử xem chưa
+        const existingViewIndex = user.viewedProducts.findIndex(
+            viewed => viewed.product.toString() === productId
+        );
+
+        if (existingViewIndex !== -1) {
+            // Nếu đã có, xóa cái cũ và thêm vào đầu với timestamp mới
+            user.viewedProducts.splice(existingViewIndex, 1);
+        }
+
+        // Thêm sản phẩm vào đầu danh sách với timestamp hiện tại
+        user.viewedProducts.unshift({
+            product: productId,
+            viewedAt: new Date()
+        });
+
+        // Giới hạn số lượng sản phẩm đã xem (tối đa 50)
+        if (user.viewedProducts.length > 50) {
+            user.viewedProducts = user.viewedProducts.slice(0, 50);
+        }
+
+        await user.save();
+
+        return {
+            EC: 0,
+            EM: "Product added to viewed history successfully"
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 3,
+            EM: "Error adding product to viewed history"
+        };
+    }
+}
+
+const getUserViewedProductsService = async (userEmail, limit = 20) => {
+    try {
+        const user = await User.findOne({ email: userEmail })
+            .populate({
+                path: 'viewedProducts.product',
+                model: 'Product'
+            })
+            .select('viewedProducts');
+        
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        // Lọc ra những sản phẩm còn tồn tại và đang active
+        const validViewedProducts = user.viewedProducts
+            .filter(viewed => viewed.product && viewed.product.isActive)
+            .slice(0, limit)
+            .map(viewed => ({
+                ...viewed.product.toObject(),
+                viewedAt: viewed.viewedAt
+            }));
+
+        return {
+            EC: 0,
+            data: validViewedProducts
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 2,
+            EM: "Error getting user viewed products"
+        };
+    }
+}
+
+const clearViewedProductsService = async (userEmail) => {
+    try {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        user.viewedProducts = [];
+        await user.save();
+
+        return {
+            EC: 0,
+            EM: "Viewed products history cleared successfully"
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 2,
+            EM: "Error clearing viewed products history"
+        };
+    }
+}
+
+const removeFromViewedProductsService = async (userEmail, productId) => {
+    try {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return {
+                EC: 1,
+                EM: "User not found"
+            };
+        }
+
+        // Tìm và xóa sản phẩm khỏi lịch sử xem
+        const viewIndex = user.viewedProducts.findIndex(
+            viewed => viewed.product.toString() === productId
+        );
+
+        if (viewIndex === -1) {
+            return {
+                EC: 2,
+                EM: "Product not found in viewed history"
+            };
+        }
+
+        user.viewedProducts.splice(viewIndex, 1);
+        await user.save();
+
+        return {
+            EC: 0,
+            EM: "Product removed from viewed history successfully"
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            EC: 3,
+            EM: "Error removing product from viewed history"
+        };
+    }
+}
 module.exports = {
     createUserService,
     loginService,
-    getUserService
+    getUserService,
+    addToFavoritesService,
+    removeFromFavoritesService,
+    getUserFavoritesService,
+    checkIsFavoriteService,
+    addToViewedProductsService,
+    getUserViewedProductsService,
+    clearViewedProductsService,
+    removeFromViewedProductsService
 }

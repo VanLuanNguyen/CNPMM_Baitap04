@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useContext } from "react";
 import type { ReactNode } from "react";
 
 // Define types
@@ -59,4 +59,13 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook for using auth context
+export const useAuthContext = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext must be used within an AuthWrapper');
+  }
+  return context;
 };

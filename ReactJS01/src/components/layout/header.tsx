@@ -3,6 +3,8 @@ import {
   UsergroupAddOutlined,
   HomeOutlined,
   SettingOutlined,
+  HeartOutlined,
+  HistoryOutlined,
 } from "@ant-design/icons";
 import { Menu } from "antd";
 import { Link } from "react-router-dom";
@@ -19,6 +21,16 @@ const Header = () => {
     },
     ...(auth.isAuthenticated
       ? [
+          {
+            label: <Link to={"/favorites"}>Yêu thích</Link>,
+            key: "favorites",
+            icon: <HeartOutlined />,
+          },
+          {
+            label: <Link to={"/viewed-products"}>Đã xem</Link>,
+            key: "viewed-products",
+            icon: <HistoryOutlined />,
+          },
           {
             label: <Link to={"/user"}>Users</Link>,
             key: "user",

@@ -149,7 +149,7 @@ export const ProductList: React.FC = () => {
                 size="small"
               />
               <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                {useFuzzySearch ? 'Tìm kiếm mờ theo tên (tolerate typos)' : 'Tìm kiếm chính xác theo tên'}
+                {useFuzzySearch ? 'Tìm kiếm theo tên (Elasticsearch)' : 'Tìm kiếm chính xác theo tên'}
               </Typography.Text>
             </Space>
           </Space>

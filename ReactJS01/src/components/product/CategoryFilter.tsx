@@ -46,7 +46,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   }
 
   if (error) {
-    return <Alert message={error} type="error" showIcon size="small" />;
+    return <Alert message={error} type="error" showIcon />;
   }
 
   return (

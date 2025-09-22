@@ -38,6 +38,22 @@ const productSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  purchaseCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  averageRating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
+  },
+  totalComments: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now

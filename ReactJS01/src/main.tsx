@@ -7,6 +7,8 @@ import { HomePage } from "./pages/home.tsx";
 import UserPage from "./pages/user.tsx";
 import RegisterPage from "./pages/register.tsx";
 import LoginPage from "./pages/login.tsx";
+import { FavoritesPage } from "./pages/favorites.tsx";
+import { ViewedProductsPage } from "./pages/viewed-products.tsx";
 import { AuthWrapper } from "./components/context/auth.context.tsx";
 
 const router = createBrowserRouter([
@@ -21,6 +23,14 @@ const router = createBrowserRouter([
       {
         path: "user",
         element: <UserPage />,
+      },
+      {
+        path: "favorites",
+        element: <FavoritesPage />,
+      },
+      {
+        path: "viewed-products",
+        element: <ViewedProductsPage />,
       },
     ],
   },
